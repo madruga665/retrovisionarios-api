@@ -9,5 +9,5 @@ type Event struct {
 	ID    int       `json:"id"`
 	Date  time.Time `json:"date"`
 	Name  string    `json:"name"`
-	Flyer string    `json:"flyer"`
+	Flyer *string   `json:"flyer"`
 }
