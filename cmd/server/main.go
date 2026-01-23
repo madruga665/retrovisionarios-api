@@ -50,8 +50,8 @@ func main() {
 
 	v1.EventRoutes(router, eventController)
 
-	// Configuração da Porta via Env
-	port := os.Getenv("HTTP_PORT")
+	// Configuração da Porta via Env (Padrão Cloud)
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = "5000"
 	}
