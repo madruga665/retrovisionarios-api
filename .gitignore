@@ -1,0 +1,23 @@
+# Binaries
+/bin/
+/dist/
+/tmp/
+
+# Air
+.air.toml
+
+# Local environment files
+.env
+
+# Assistant/Agent configs
+.gemini/
+.agent/
+.agents/
+
+# IDEs
+.vscode/
+.idea/
+
+# Go
+# go.sum should be tracked in Git for dependency integrity
+# vendor/
