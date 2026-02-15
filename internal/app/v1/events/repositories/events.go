@@ -15,9 +15,18 @@ func NewEventRepository(db *pgxpool.Pool) *EventRepository {
 	return &EventRepository{db: db}
 }
 
-func (r *EventRepository) GetAll() ([]models.Event, error) {
-	query := "SELECT id, date, name, flyer FROM events ORDER BY date ASC"
-	rows, err := r.db.Query(context.Background(), query)
+func (r *EventRepository) GetAll(year int) ([]models.Event, error) {
+	query := "SELECT id, date, name, flyer FROM events"
+	args := []interface{}{}
+
+	if year > 0 {
+		query += " WHERE EXTRACT(YEAR FROM date) = $1"
+		args = append(args, year)
+	}
+
+	query += " ORDER BY date ASC"
+
+	rows, err := r.db.Query(context.Background(), query, args...)
 	var events []models.Event
 
 	if err != nil {
