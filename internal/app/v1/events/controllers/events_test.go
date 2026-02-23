@@ -43,10 +43,10 @@ func TestEventController_Create(t *testing.T) {
 			_, r := gin.CreateTestContext(w)
 			r.POST("/events", controller.Create)
 	
-			eventDate := time.Date(2026, 2, 20, 0, 0, 0, 0, time.UTC)
+			eventDate := time.Date(2026, 2, 20, 21, 30, 0, 0, time.UTC)
 			input := map[string]interface{}{
 				"name":     "Evento Teste",
-				"date":     "2026-02-20",
+				"date":     "2026-02-20 21:30",
 				"location": "Local Teste",
 			}
 			body, _ := json.Marshal(input)
