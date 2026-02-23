@@ -11,6 +11,7 @@ import (
 
 type EventService interface {
 	GetAll(year int) ([]models.Event, error)
+	Create(event *models.Event) error
 }
 
 type EventController struct {
@@ -46,4 +47,27 @@ func (c *EventController) GetAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"result": events,
 	})
+}
+
+func (c *EventController) Create(ctx *gin.Context) {
+	var event models.Event
+
+	if err := ctx.ShouldBindJSON(&event); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Payload malformado ou campos inválidos"})
+		fmt.Println(err)
+		return
+	}
+
+	if event.Name == "" || event.Date.IsZero() {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Os campos 'date' e 'name' são obrigatórios"})
+		return
+	}
+
+	if err := c.service.Create(&event); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno ao criar evento"})
+		fmt.Println(err)
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, event)
 }
