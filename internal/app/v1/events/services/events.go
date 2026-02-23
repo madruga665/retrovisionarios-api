@@ -4,6 +4,7 @@ import "retrovisionarios-api/internal/app/v1/events/models"
 
 type EventRepository interface {
 	GetAll(year int) ([]models.Event, error)
+	Create(event *models.Event) error
 }
 
 type EventService struct {
@@ -22,4 +23,8 @@ func (s *EventService) GetAll(year int) ([]models.Event, error) {
 	}
 
 	return eventList, nil
+}
+
+func (s *EventService) Create(event *models.Event) error {
+	return s.repo.Create(event)
 }

@@ -10,5 +10,6 @@ func EventRoutes(r *gin.Engine, c *controllers.EventController) {
 	v1 := r.Group("/v1")
 	{
 		v1.GET("/events", c.GetAll)
+		v1.POST("/events", c.Create)
 	}
 }

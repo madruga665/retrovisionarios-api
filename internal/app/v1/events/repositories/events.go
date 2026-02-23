@@ -52,3 +52,8 @@ func (r *EventRepository) GetAll(year int) ([]models.Event, error) {
 
 	return events, nil
 }
+
+func (r *EventRepository) Create(event *models.Event) error {
+	query := "INSERT INTO events (date, name, flyer) VALUES ($1, $2, $3) RETURNING id"
+	return r.db.QueryRow(context.Background(), query, event.Date, event.Name, event.Flyer).Scan(&event.ID)
+}
