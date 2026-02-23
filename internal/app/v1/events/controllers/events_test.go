@@ -45,8 +45,9 @@ func TestEventController_Create(t *testing.T) {
 	
 			eventDate := time.Date(2026, 2, 20, 0, 0, 0, 0, time.UTC)
 			input := map[string]interface{}{
-				"name": "Evento Teste",
-				"date": "2026-02-20",
+				"name":     "Evento Teste",
+				"date":     "2026-02-20",
+				"location": "Local Teste",
 			}
 			body, _ := json.Marshal(input)
 			req, _ := http.NewRequest(http.MethodPost, "/events", bytes.NewBuffer(body))
@@ -68,6 +69,9 @@ func TestEventController_Create(t *testing.T) {
 			}
 			if response.Name != "Evento Teste" {
 				t.Errorf("Expected name 'Evento Teste', got '%s'", response.Name)
+			}
+			if response.Location != "Local Teste" {
+				t.Errorf("Expected location 'Local Teste', got '%s'", response.Location)
 			}
 			if !time.Time(response.Date).Equal(eventDate) {
 				t.Errorf("Expected date %v, got %v", eventDate, response.Date)

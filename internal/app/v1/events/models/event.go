@@ -56,8 +56,9 @@ func (d Date) Value() (driver.Value, error) {
 // Event representa um show ou apresentação da banda.
 
 type Event struct {
-	ID    int     `json:"id"`
-	Date  Date    `json:"date"`
-	Name  string  `json:"name"`
-	Flyer *string `json:"flyer"`
+	ID       int     `json:"id"`
+	Date     Date    `json:"date"`
+	Name     string  `json:"name"`
+	Location string  `json:"location"`
+	Flyer    *string `json:"flyer"`
 }
