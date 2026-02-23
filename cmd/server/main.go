@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,29 +19,44 @@ import (
 	"retrovisionarios-api/internal/app/v1/events/services"
 	postgres "retrovisionarios-api/internal/db"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	env.Load()
+	cfg := env.Load()
+
+	// ... (logger configuration)
+	var handler slog.Handler
+	if os.Getenv("GIN_MODE") == "release" {
+		handler = slog.NewJSONHandler(os.Stdout, nil)
+	} else {
+		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
+	}
+	slog.SetDefault(slog.New(handler))
 
 	router := gin.New()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
-	// Configuração de Trusted Proxies via Env
-	trustedProxies := os.Getenv("TRUSTED_PROXIES")
-	if trustedProxies == "" {
-		trustedProxies = "localhost"
-	}
-	router.SetTrustedProxies(strings.Split(trustedProxies, ","))
+	// Configuração do CORS
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = strings.Split(cfg.AllowedOrigins, ",")
+	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
+	router.Use(cors.New(corsConfig))
 
-	dbPool, err := postgres.DbPool()
+	// Configuração de Trusted Proxies via Config
+	router.SetTrustedProxies(strings.Split(cfg.TrustedProxies, ","))
 
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	dbPool, err := postgres.DbPool(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatal("Erro ao conectar ao banco", err)
+		slog.Error("Erro fatal ao conectar ao banco", "error", err)
+		os.Exit(1)
 	}
-
 	defer dbPool.Close()
 
 	eventRepository := repositories.NewEventRepository(dbPool)
@@ -50,38 +65,30 @@ func main() {
 
 	v1.EventRoutes(router, eventController)
 
-	// Configuração da Porta via Env (Padrão Cloud)
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "5000"
-	}
-
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", port),
+		Addr:    fmt.Sprintf(":%s", cfg.Port),
 		Handler: router,
 	}
 
-	// Executa o servidor em uma goroutine para não bloquear
+	// Executa o servidor em uma goroutine
 	go func() {
+		slog.Info("Iniciando servidor", "port", cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+			slog.Error("Erro no servidor HTTP", "error", err)
+			os.Exit(1)
 		}
 	}()
 
-	// Aguarda sinal de interrupção para desligar graciosamente (timeout de 5s)
-	quit := make(chan os.Signal, 1)
-	// kill (sem param) envia syscall.SIGTERM
-	// kill -2 envia syscall.SIGINT
-	// kill -9 envia syscall.SIGKILL (não pode ser capturado)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	log.Println("Desligando servidor...")
+	// Aguarda sinal de interrupção
+	<-ctx.Done()
+	slog.Info("Desligando servidor graciosamente...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Forçando desligamento do servidor:", err)
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		slog.Error("Forçando desligamento do servidor", "error", err)
+		os.Exit(1)
 	}
 
-	log.Println("Servidor finalizado.")
+	slog.Info("Servidor finalizado com sucesso.")
 }

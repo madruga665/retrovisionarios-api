@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -15,16 +16,16 @@ import (
 )
 
 type mockEventService struct {
-	GetAllFunc func(year int) ([]models.Event, error)
-	CreateFunc func(event *models.Event) error
+	GetAllFunc func(ctx context.Context, year int) ([]models.Event, error)
+	CreateFunc func(ctx context.Context, event *models.Event) error
 }
 
-func (m *mockEventService) GetAll(year int) ([]models.Event, error) {
-	return m.GetAllFunc(year)
+func (m *mockEventService) GetAll(ctx context.Context, year int) ([]models.Event, error) {
+	return m.GetAllFunc(ctx, year)
 }
 
-func (m *mockEventService) Create(event *models.Event) error {
-	return m.CreateFunc(event)
+func (m *mockEventService) Create(ctx context.Context, event *models.Event) error {
+	return m.CreateFunc(ctx, event)
 }
 
 func TestEventController_Create(t *testing.T) {
@@ -32,7 +33,7 @@ func TestEventController_Create(t *testing.T) {
 
 		t.Run("Success Happy Path", func(t *testing.T) {
 			mockService := &mockEventService{
-				CreateFunc: func(event *models.Event) error {
+				CreateFunc: func(ctx context.Context, event *models.Event) error {
 					event.ID = 1
 					return nil
 				},
@@ -129,7 +130,7 @@ func TestEventController_Create(t *testing.T) {
 	
 		t.Run("Internal Server Error", func(t *testing.T) {
 			mockService := &mockEventService{
-				CreateFunc: func(event *models.Event) error {
+				CreateFunc: func(ctx context.Context, event *models.Event) error {
 					return errors.New("db error")
 				},
 			}

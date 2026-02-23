@@ -1,7 +1,8 @@
 package controllers
 
 import (
-	"fmt"
+	"context"
+	"log/slog"
 	"net/http"
 	"retrovisionarios-api/internal/app/v1/events/models"
 	"strconv"
@@ -10,8 +11,8 @@ import (
 )
 
 type EventService interface {
-	GetAll(year int) ([]models.Event, error)
-	Create(event *models.Event) error
+	GetAll(ctx context.Context, year int) ([]models.Event, error)
+	Create(ctx context.Context, event *models.Event) error
 }
 
 type EventController struct {
@@ -32,15 +33,13 @@ func (c *EventController) GetAll(ctx *gin.Context) {
 		}
 	}
 
-	events, err := c.service.GetAll(year)
+	events, err := c.service.GetAll(ctx.Request.Context(), year)
 
 	if err != nil {
+		slog.Error("Erro ao buscar eventos", "error", err, "year", year)
 		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Erro no service Events GetAll",
+			"message": "Erro ao buscar eventos",
 		})
-
-		fmt.Println(err)
-
 		return
 	}
 
@@ -53,8 +52,8 @@ func (c *EventController) Create(ctx *gin.Context) {
 	var event models.Event
 
 	if err := ctx.ShouldBindJSON(&event); err != nil {
+		slog.Warn("Payload malformado na criação de evento", "error", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Payload malformado ou campos inválidos"})
-		fmt.Println(err)
 		return
 	}
 
@@ -63,9 +62,9 @@ func (c *EventController) Create(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.service.Create(&event); err != nil {
+	if err := c.service.Create(ctx.Request.Context(), &event); err != nil {
+		slog.Error("Erro interno ao criar evento", "error", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno ao criar evento"})
-		fmt.Println(err)
 		return
 	}
 

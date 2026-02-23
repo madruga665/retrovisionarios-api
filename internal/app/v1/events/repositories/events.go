@@ -15,7 +15,7 @@ func NewEventRepository(db *pgxpool.Pool) *EventRepository {
 	return &EventRepository{db: db}
 }
 
-func (r *EventRepository) GetAll(year int) ([]models.Event, error) {
+func (r *EventRepository) GetAll(ctx context.Context, year int) ([]models.Event, error) {
 	query := "SELECT id, date, name, location, flyer FROM events"
 	args := []interface{}{}
 
@@ -26,7 +26,7 @@ func (r *EventRepository) GetAll(year int) ([]models.Event, error) {
 
 	query += " ORDER BY date ASC"
 
-	rows, err := r.db.Query(context.Background(), query, args...)
+	rows, err := r.db.Query(ctx, query, args...)
 	var events []models.Event
 
 	if err != nil {
@@ -53,7 +53,7 @@ func (r *EventRepository) GetAll(year int) ([]models.Event, error) {
 	return events, nil
 }
 
-func (r *EventRepository) Create(event *models.Event) error {
+func (r *EventRepository) Create(ctx context.Context, event *models.Event) error {
 	query := "INSERT INTO events (date, name, location, flyer) VALUES ($1, $2, $3, $4) RETURNING id"
-	return r.db.QueryRow(context.Background(), query, event.Date, event.Name, event.Location, event.Flyer).Scan(&event.ID)
+	return r.db.QueryRow(ctx, query, event.Date, event.Name, event.Location, event.Flyer).Scan(&event.ID)
 }
