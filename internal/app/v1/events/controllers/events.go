@@ -23,6 +23,15 @@ func NewEventController(service EventService) *EventController {
 	return &EventController{service: service}
 }
 
+// GetAll godoc
+// @Summary      Listar eventos
+// @Description  Retorna uma lista de eventos, opcionalmente filtrada por ano.
+// @Tags         events
+// @Produce      json
+// @Param        year  query     int  false  "Ano para filtrar eventos"
+// @Success      200   {object}  map[string][]models.Event
+// @Failure      500   {object}  map[string]string
+// @Router       /events [get]
 func (c *EventController) GetAll(ctx *gin.Context) {
 	yearStr := ctx.Query("year")
 	year := 0
@@ -48,6 +57,17 @@ func (c *EventController) GetAll(ctx *gin.Context) {
 	})
 }
 
+// Create godoc
+// @Summary      Criar evento
+// @Description  Cria um novo evento de show.
+// @Tags         events
+// @Accept       json
+// @Produce      json
+// @Param        event  body      models.Event  true  "Dados do evento"
+// @Success      201    {object}  models.Event
+// @Failure      400    {object}  map[string]string
+// @Failure      500    {object}  map[string]string
+// @Router       /events [post]
 func (c *EventController) Create(ctx *gin.Context) {
 	var event models.Event
 

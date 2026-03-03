@@ -19,9 +19,28 @@ import (
 	"retrovisionarios-api/internal/app/v1/events/services"
 	postgres "retrovisionarios-api/internal/db"
 
+	_ "retrovisionarios-api/docs"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title           Retrovisionarios API
+// @version         1.0
+// @description     API para gerenciamento de eventos e shows da banda Retrovisionarios.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:5000
+// @BasePath  /v1
 
 func main() {
 	cfg := env.Load()
@@ -64,6 +83,9 @@ func main() {
 	eventController := controllers.NewEventController(eventService)
 
 	v1.EventRoutes(router, eventController)
+
+	// Rota do Swagger
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Port),
