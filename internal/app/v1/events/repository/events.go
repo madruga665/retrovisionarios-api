@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"retrovisionarios-api/internal/app/v1/events/models"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -39,14 +40,14 @@ func (r *EventRepository) GetAll(ctx context.Context, year int) ([]models.Event,
 
 		err := rows.Scan(&e.ID, &e.Date, &e.Name, &e.Location, &e.Flyer)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan event: %w", err)
 		}
 
 		events = append(events, e)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error during rows iteration: %w", err)
 	}
 
 	return events, nil
@@ -54,5 +55,8 @@ func (r *EventRepository) GetAll(ctx context.Context, year int) ([]models.Event,
 
 func (r *EventRepository) Create(ctx context.Context, event *models.Event) error {
 	query := "INSERT INTO events (date, name, location, flyer) VALUES ($1, $2, $3, $4) RETURNING id"
-	return r.db.QueryRow(ctx, query, event.Date, event.Name, event.Location, event.Flyer).Scan(&event.ID)
+	if err := r.db.QueryRow(ctx, query, event.Date, event.Name, event.Location, event.Flyer).Scan(&event.ID); err != nil {
+		return fmt.Errorf("failed to insert event: %w", err)
+	}
+	return nil
 }

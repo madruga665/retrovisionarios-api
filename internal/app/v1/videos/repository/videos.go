@@ -30,7 +30,8 @@ func (r *VideoRepository) GetAll(ctx context.Context) ([]models.Video, error) {
 	for rows.Next() {
 		var v models.Video
 
-		if err := rows.Scan(&v.ID, &v.Title, &v.Subtitle, &v.VideoSrc, &v.Category); err != nil {
+		err := rows.Scan(&v.ID, &v.Title, &v.Subtitle, &v.VideoSrc, &v.Category)
+		if err != nil {
 			return nil, fmt.Errorf("failed to scan video: %w", err)
 		}
 
@@ -38,7 +39,7 @@ func (r *VideoRepository) GetAll(ctx context.Context) ([]models.Video, error) {
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error during rows iteration: %w", err)
 	}
 
 	return videos, nil
