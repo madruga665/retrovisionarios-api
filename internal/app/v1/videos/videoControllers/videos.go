@@ -26,7 +26,7 @@ func NewEventController(service VideoService) *VideoController {
 // @Description  Retorna uma lista de videos
 // @Tags         videos
 // @Produce      json
-// @Success      200   {object}  map[string][]models.Event
+// @Success      200   {object}  map[string][]models.Video
 // @Failure      500   {object}  map[string]string
 // @Router       /videos [get]
 func (c *VideoController) GetAll(ctx *gin.Context) {
