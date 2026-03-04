@@ -1,7 +1,8 @@
-package videoRepositories
+package repository
 
 import (
 	"context"
+	"fmt"
 	"retrovisionarios-api/internal/app/v1/videos/models"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -29,9 +30,8 @@ func (r *VideoRepository) GetAll(ctx context.Context) ([]models.Video, error) {
 	for rows.Next() {
 		var v models.Video
 
-		err := rows.Scan(&v.ID, &v.Title, &v.Subtitle, &v.VideoSrc, &v.Category)
-		if err != nil {
-			return nil, err
+		if err := rows.Scan(&v.ID, &v.Title, &v.Subtitle, &v.VideoSrc, &v.Category); err != nil {
+			return nil, fmt.Errorf("failed to scan video: %w", err)
 		}
 
 		videos = append(videos, v)

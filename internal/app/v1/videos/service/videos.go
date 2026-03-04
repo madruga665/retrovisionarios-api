@@ -1,4 +1,4 @@
-package videoServices
+package service
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func (s *VideoService) GetAll(ctx context.Context) (map[string][]models.Video, e
 	}
 
 	for _, v := range videoList {
-		key := strings.ToLower(strings.ReplaceAll(v.Category, " ", "_"))
+		key := strings.ToLower(strings.ReplaceAll(string(v.Category), " ", "_"))
 		groupedVideos[key] = append(groupedVideos[key], v)
 	}
 	return groupedVideos, nil

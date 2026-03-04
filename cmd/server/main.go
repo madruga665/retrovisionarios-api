@@ -14,12 +14,12 @@ import (
 	"retrovisionarios-api/config/env"
 
 	v1 "retrovisionarios-api/internal/app/v1"
-	"retrovisionarios-api/internal/app/v1/events/eventControllers"
-	"retrovisionarios-api/internal/app/v1/events/repositories"
-	"retrovisionarios-api/internal/app/v1/events/services"
-	"retrovisionarios-api/internal/app/v1/videos/videoControllers"
-	"retrovisionarios-api/internal/app/v1/videos/videoRepositories"
-	"retrovisionarios-api/internal/app/v1/videos/videoServices"
+	eventCtrl "retrovisionarios-api/internal/app/v1/events/controller"
+	eventRepo "retrovisionarios-api/internal/app/v1/events/repository"
+	eventServ "retrovisionarios-api/internal/app/v1/events/service"
+	videoCtrl "retrovisionarios-api/internal/app/v1/videos/controller"
+	videoRepo "retrovisionarios-api/internal/app/v1/videos/repository"
+	VideoServ "retrovisionarios-api/internal/app/v1/videos/service"
 	postgres "retrovisionarios-api/internal/db"
 
 	_ "retrovisionarios-api/docs"
@@ -82,14 +82,14 @@ func main() {
 	defer dbPool.Close()
 
 	// Events
-	eventRepository := repositories.NewEventRepository(dbPool)
-	eventService := services.NewEventService(eventRepository)
-	eventController := eventControllers.NewEventController(eventService)
+	eventRepository := eventRepo.NewEventRepository(dbPool)
+	eventService := eventServ.NewEventService(eventRepository)
+	eventController := eventCtrl.NewEventController(eventService)
 
 	// Videos
-	videoRepository := videoRepositories.NewVideoRepository(dbPool)
-	videoService := videoServices.NewVideoService(videoRepository)
-	videoController := videoControllers.NewVideoController(videoService)
+	videoRepository := videoRepo.NewVideoRepository(dbPool)
+	videoService := VideoServ.NewVideoService(videoRepository)
+	videoController := videoCtrl.NewVideoController(videoService)
 
 	v1.SetupRoutes(router, v1.RouterConfig{
 		EventController: eventController,

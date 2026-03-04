@@ -1,4 +1,4 @@
-package videoControllers
+package controller
 
 import (
 	"context"

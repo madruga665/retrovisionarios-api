@@ -1,4 +1,4 @@
-package eventControllers
+package controller
 
 import (
 	"bytes"

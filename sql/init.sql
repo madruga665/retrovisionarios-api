@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS events (
     date TIMESTAMP NOT NULL,
     name VARCHAR(255) NOT NULL,
     location VARCHAR(255),
-    flyer VARCHAR(255)
+    flyer TEXT
 );
 
 -- 2. Inserção de dados em eventos (Note o ";" no final)
