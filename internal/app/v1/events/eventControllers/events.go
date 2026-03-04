@@ -1,4 +1,4 @@
-package controllers
+package eventControllers
 
 import (
 	"context"
