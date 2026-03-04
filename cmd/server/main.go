@@ -14,9 +14,12 @@ import (
 	"retrovisionarios-api/config/env"
 
 	v1 "retrovisionarios-api/internal/app/v1"
-	"retrovisionarios-api/internal/app/v1/events/controllers"
-	"retrovisionarios-api/internal/app/v1/events/repositories"
-	"retrovisionarios-api/internal/app/v1/events/services"
+	eventCtrl "retrovisionarios-api/internal/app/v1/events/controller"
+	eventRepo "retrovisionarios-api/internal/app/v1/events/repository"
+	eventServ "retrovisionarios-api/internal/app/v1/events/service"
+	videoCtrl "retrovisionarios-api/internal/app/v1/videos/controller"
+	videoRepo "retrovisionarios-api/internal/app/v1/videos/repository"
+	VideoServ "retrovisionarios-api/internal/app/v1/videos/service"
 	postgres "retrovisionarios-api/internal/db"
 
 	_ "retrovisionarios-api/docs"
@@ -78,11 +81,20 @@ func main() {
 	}
 	defer dbPool.Close()
 
-	eventRepository := repositories.NewEventRepository(dbPool)
-	eventService := services.NewEventService(eventRepository)
-	eventController := controllers.NewEventController(eventService)
+	// Events
+	eventRepository := eventRepo.NewEventRepository(dbPool)
+	eventService := eventServ.NewEventService(eventRepository)
+	eventController := eventCtrl.NewEventController(eventService)
 
-	v1.EventRoutes(router, eventController)
+	// Videos
+	videoRepository := videoRepo.NewVideoRepository(dbPool)
+	videoService := VideoServ.NewVideoService(videoRepository)
+	videoController := videoCtrl.NewVideoController(videoService)
+
+	v1.SetupRoutes(router, v1.RouterConfig{
+		EventController: eventController,
+		VideoController: videoController,
+	})
 
 	// Rota do Swagger
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

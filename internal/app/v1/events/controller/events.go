@@ -1,4 +1,4 @@
-package controllers
+package controller
 
 import (
 	"context"
@@ -72,13 +72,8 @@ func (c *EventController) Create(ctx *gin.Context) {
 	var event models.Event
 
 	if err := ctx.ShouldBindJSON(&event); err != nil {
-		slog.Warn("Payload malformado na criação de evento", "error", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Payload malformado ou campos inválidos"})
-		return
-	}
-
-	if event.Name == "" || event.Date.IsZero() {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Os campos 'date' e 'name' são obrigatórios"})
+		slog.Warn("Falha na validação de payload na criação de evento", "error", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "os campos 'date' e 'name' são obrigatórios e devem estar no formato correto"})
 		return
 	}
 

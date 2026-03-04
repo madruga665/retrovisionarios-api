@@ -13,6 +13,19 @@ definitions:
       name:
         type: string
     type: object
+  models.Video:
+    properties:
+      category:
+        type: string
+      id:
+        type: integer
+      subtitle:
+        type: string
+      title:
+        type: string
+      videoSrc:
+        type: string
+    type: object
 host: localhost:5000
 info:
   contact:
@@ -88,4 +101,27 @@ paths:
       summary: Criar evento
       tags:
       - events
+  /videos:
+    get:
+      description: Retorna uma lista de videos
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/models.Video'
+              type: array
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Listar videos
+      tags:
+      - videos
 swagger: "2.0"

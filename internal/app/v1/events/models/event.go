@@ -61,8 +61,8 @@ func (d DateTime) Value() (driver.Value, error) {
 
 type Event struct {
 	ID       int      `json:"id"`
-	Date     DateTime `json:"date"`
-	Name     string   `json:"name"`
+	Date     DateTime `json:"date" binding:"required"`
+	Name     string   `json:"name" binding:"required"`
 	Location string   `json:"location"`
 	Flyer    *string  `json:"flyer"`
 }
