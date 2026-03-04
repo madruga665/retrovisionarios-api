@@ -27,20 +27,19 @@ func (r *EventRepository) GetAll(ctx context.Context, year int) ([]models.Event,
 	query += " ORDER BY date ASC"
 
 	rows, err := r.db.Query(ctx, query, args...)
-	var events []models.Event
-
 	if err != nil {
-		return events, err
+		return nil, err
 	}
-
 	defer rows.Close()
+
+	events := make([]models.Event, 0, 10)
 
 	for rows.Next() {
 		var e models.Event
 
 		err := rows.Scan(&e.ID, &e.Date, &e.Name, &e.Location, &e.Flyer)
 		if err != nil {
-			return events, err
+			return nil, err
 		}
 
 		events = append(events, e)

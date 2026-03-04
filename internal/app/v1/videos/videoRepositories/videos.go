@@ -16,26 +16,25 @@ func NewVideoRepository(db *pgxpool.Pool) *VideoRepository {
 }
 
 func (r *VideoRepository) GetAll(ctx context.Context) ([]models.Video, error) {
-	query := "SELECT id, title, subtitle, video_src, category FROM videos"
+	query := "SELECT id, title, subtitle, video_src, category FROM videos ORDER BY id ASC"
 
 	rows, err := r.db.Query(ctx, query)
-	var videos []models.Video
-
 	if err != nil {
-		return videos, err
+		return nil, err
 	}
-
 	defer rows.Close()
 
-	for rows.Next() {
-		var e models.Video
+	videos := make([]models.Video, 0, 10)
 
-		err := rows.Scan(&e.ID, &e.Title, &e.Subtitle, &e.VideoSrc, &e.Category)
+	for rows.Next() {
+		var v models.Video
+
+		err := rows.Scan(&v.ID, &v.Title, &v.Subtitle, &v.VideoSrc, &v.Category)
 		if err != nil {
-			return videos, err
+			return nil, err
 		}
 
-		videos = append(videos, e)
+		videos = append(videos, v)
 	}
 
 	if err = rows.Err(); err != nil {
