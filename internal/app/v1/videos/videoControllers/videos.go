@@ -17,7 +17,7 @@ type VideoController struct {
 	service VideoService
 }
 
-func NewEventController(service VideoService) *VideoController {
+func NewVideoController(service VideoService) *VideoController {
 	return &VideoController{service: service}
 }
 

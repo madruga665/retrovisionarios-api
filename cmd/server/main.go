@@ -89,7 +89,7 @@ func main() {
 	// Videos
 	videoRepository := videoRepositories.NewVideoRepository(dbPool)
 	videoService := videoServices.NewVideoService(videoRepository)
-	videoController := videoControllers.NewEventController(videoService)
+	videoController := videoControllers.NewVideoController(videoService)
 
 	v1.SetupRoutes(router, v1.RouterConfig{
 		EventController: eventController,
