@@ -6,8 +6,9 @@ import (
 )
 
 type EventRepository interface {
-	GetAll(ctx context.Context, year int) ([]models.Event, error)
+	GetAll(ctx context.Context, year int, showDeleted bool) ([]models.Event, error)
 	Create(ctx context.Context, event *models.Event) error
+	Delete(ctx context.Context, id int) error
 }
 
 type EventService struct {
@@ -18,14 +19,18 @@ func NewEventService(repo EventRepository) *EventService {
 	return &EventService{repo: repo}
 }
 
-func (s *EventService) GetAll(ctx context.Context, year int) ([]models.Event, error) {
-	eventList, err := s.repo.GetAll(ctx, year)
+func (s *EventService) GetAll(ctx context.Context, year int, showDeleted bool) ([]models.Event, error) {
+	eventList, err := s.repo.GetAll(ctx, year, showDeleted)
 
 	if err != nil {
 		return []models.Event{}, err
 	}
 
 	return eventList, nil
+}
+
+func (s *EventService) Delete(ctx context.Context, id int) error {
+	return s.repo.Delete(ctx, id)
 }
 
 func (s *EventService) Create(ctx context.Context, event *models.Event) error {

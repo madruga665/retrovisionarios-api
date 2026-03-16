@@ -65,4 +65,5 @@ type Event struct {
 	Name     string   `json:"name" binding:"required"`
 	Location string   `json:"location"`
 	Flyer    *string  `json:"flyer"`
+	Deleted  bool     `json:"deleted"`
 }

@@ -11,8 +11,9 @@ import (
 )
 
 type EventService interface {
-	GetAll(ctx context.Context, year int) ([]models.Event, error)
+	GetAll(ctx context.Context, year int, showDeleted bool) ([]models.Event, error)
 	Create(ctx context.Context, event *models.Event) error
+	Delete(ctx context.Context, id int) error
 }
 
 type EventController struct {
@@ -25,12 +26,13 @@ func NewEventController(service EventService) *EventController {
 
 // GetAll godoc
 // @Summary      Listar eventos
-// @Description  Retorna uma lista de eventos, opcionalmente filtrada por ano.
+// @Description  Retorna uma lista de eventos, opcionalmente filtrada por ano e status de deleção.
 // @Tags         events
 // @Produce      json
-// @Param        year  query     int  false  "Ano para filtrar eventos"
-// @Success      200   {object}  map[string][]models.Event
-// @Failure      500   {object}  map[string]string
+// @Param        year     query     int   false  "Ano para filtrar eventos"
+// @Param        deleted  query     bool  false  "Se true, lista também eventos deletados"
+// @Success      200      {object}  map[string][]models.Event
+// @Failure      500      {object}  map[string]string
 // @Router       /events [get]
 func (c *EventController) GetAll(ctx *gin.Context) {
 	yearStr := ctx.Query("year")
@@ -42,10 +44,12 @@ func (c *EventController) GetAll(ctx *gin.Context) {
 		}
 	}
 
-	events, err := c.service.GetAll(ctx.Request.Context(), year)
+	showDeleted, _ := strconv.ParseBool(ctx.DefaultQuery("deleted", "false"))
+
+	events, err := c.service.GetAll(ctx.Request.Context(), year, showDeleted)
 
 	if err != nil {
-		slog.Error("Erro ao buscar eventos", "error", err, "year", year)
+		slog.Error("Erro ao buscar eventos", "error", err, "year", year, "showDeleted", showDeleted)
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Erro ao buscar eventos",
 		})
@@ -55,6 +59,32 @@ func (c *EventController) GetAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"result": events,
 	})
+}
+
+// Delete godoc
+// @Summary      Deletar evento
+// @Description  Realiza um soft delete de um evento.
+// @Tags         events
+// @Param        id   path      int  true  "ID do evento"
+// @Success      204  "No Content"
+// @Failure      400  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /events/{id} [delete]
+func (c *EventController) Delete(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+
+	if err := c.service.Delete(ctx.Request.Context(), id); err != nil {
+		slog.Error("Erro ao deletar evento", "error", err, "id", id)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao deletar evento"})
+		return
+	}
+
+	ctx.Status(http.StatusNoContent)
 }
 
 // Create godoc
