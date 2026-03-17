@@ -16,16 +16,21 @@ import (
 )
 
 type mockEventService struct {
-	GetAllFunc func(ctx context.Context, year int) ([]models.Event, error)
+	GetAllFunc func(ctx context.Context, year int, showDeleted bool) ([]models.Event, error)
 	CreateFunc func(ctx context.Context, event *models.Event) error
+	DeleteFunc func(ctx context.Context, id int) error
 }
 
-func (m *mockEventService) GetAll(ctx context.Context, year int) ([]models.Event, error) {
-	return m.GetAllFunc(ctx, year)
+func (m *mockEventService) GetAll(ctx context.Context, year int, showDeleted bool) ([]models.Event, error) {
+	return m.GetAllFunc(ctx, year, showDeleted)
 }
 
 func (m *mockEventService) Create(ctx context.Context, event *models.Event) error {
 	return m.CreateFunc(ctx, event)
+}
+
+func (m *mockEventService) Delete(ctx context.Context, id int) error {
+	return m.DeleteFunc(ctx, id)
 }
 
 func TestEventController_Create(t *testing.T) {
@@ -98,7 +103,7 @@ func TestEventController_Create(t *testing.T) {
 		if w.Code != http.StatusBadRequest {
 			t.Errorf("Expected status 400, got %d", w.Code)
 		}
-		if !strings.Contains(w.Body.String(), "Os campos 'date' e 'name' são obrigatórios") {
+		if !strings.Contains(w.Body.String(), "os campos 'date' e 'name' são obrigatórios") {
 			t.Errorf("Expected error message about required fields, got %s", w.Body.String())
 		}
 	})
@@ -123,7 +128,7 @@ func TestEventController_Create(t *testing.T) {
 		if w.Code != http.StatusBadRequest {
 			t.Errorf("Expected status 400, got %d", w.Code)
 		}
-		if !strings.Contains(w.Body.String(), "Payload malformado ou campos inválidos") {
+		if !strings.Contains(w.Body.String(), "os campos 'date' e 'name' são obrigatórios e devem estar no formato correto") {
 			t.Errorf("Expected error message about malformed payload, got %s", w.Body.String())
 		}
 	})
@@ -157,4 +162,113 @@ func TestEventController_Create(t *testing.T) {
 		}
 	})
 
+}
+
+func TestEventController_GetAll(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("Success - List all active events", func(t *testing.T) {
+		mockService := &mockEventService{
+			GetAllFunc: func(ctx context.Context, year int, showDeleted bool) ([]models.Event, error) {
+				return []models.Event{
+					{ID: 1, Name: "Evento 1", Deleted: false},
+					{ID: 2, Name: "Evento 2", Deleted: false},
+				}, nil
+			},
+		}
+		controller := NewEventController(mockService)
+
+		w := httptest.NewRecorder()
+		_, r := gin.CreateTestContext(w)
+		r.GET("/events", controller.GetAll)
+
+		req, _ := http.NewRequest(http.MethodGet, "/events", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", w.Code)
+		}
+
+		var response map[string][]models.Event
+		json.Unmarshal(w.Body.Bytes(), &response)
+		if len(response["result"]) != 2 {
+			t.Errorf("Expected 2 events, got %d", len(response["result"]))
+		}
+	})
+
+	t.Run("Success - Filter by year and deleted", func(t *testing.T) {
+		mockService := &mockEventService{
+			GetAllFunc: func(ctx context.Context, year int, showDeleted bool) ([]models.Event, error) {
+				if year == 2026 && showDeleted == true {
+					return []models.Event{
+						{ID: 1, Name: "Evento Deletado", Deleted: true},
+					}, nil
+				}
+				return []models.Event{}, nil
+			},
+		}
+		controller := NewEventController(mockService)
+
+		w := httptest.NewRecorder()
+		_, r := gin.CreateTestContext(w)
+		r.GET("/events", controller.GetAll)
+
+		req, _ := http.NewRequest(http.MethodGet, "/events?year=2026&deleted=true", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", w.Code)
+		}
+
+		var response map[string][]models.Event
+		json.Unmarshal(w.Body.Bytes(), &response)
+		if len(response["result"]) != 1 {
+			t.Errorf("Expected 1 event, got %d", len(response["result"]))
+		}
+		if response["result"][0].Deleted != true {
+			t.Errorf("Expected deleted event")
+		}
+	})
+}
+
+func TestEventController_Delete(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("Success Happy Path", func(t *testing.T) {
+		mockService := &mockEventService{
+			DeleteFunc: func(ctx context.Context, id int) error {
+				if id == 1 {
+					return nil
+				}
+				return errors.New("event not found")
+			},
+		}
+		controller := NewEventController(mockService)
+
+		w := httptest.NewRecorder()
+		_, r := gin.CreateTestContext(w)
+		r.DELETE("/events/:id", controller.Delete)
+
+		req, _ := http.NewRequest(http.MethodDelete, "/events/1", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusNoContent {
+			t.Errorf("Expected status 204, got %d", w.Code)
+		}
+	})
+
+	t.Run("Invalid ID", func(t *testing.T) {
+		controller := NewEventController(&mockEventService{})
+
+		w := httptest.NewRecorder()
+		_, r := gin.CreateTestContext(w)
+		r.DELETE("/events/:id", controller.Delete)
+
+		req, _ := http.NewRequest(http.MethodDelete, "/events/abc", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("Expected status 400, got %d", w.Code)
+		}
+	})
 }

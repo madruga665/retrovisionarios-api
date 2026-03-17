@@ -16,11 +16,17 @@ func NewEventRepository(db *pgxpool.Pool) *EventRepository {
 	return &EventRepository{db: db}
 }
 
-func (r *EventRepository) GetAll(ctx context.Context, year int) ([]models.Event, error) {
-	query := "SELECT id, date, name, location, flyer FROM events"
+func (r *EventRepository) GetAll(ctx context.Context, year int, showDeleted bool) ([]models.Event, error) {
+	query := "SELECT id, date, name, location, flyer, deleted FROM events"
 	args := []interface{}{}
 
-	if year > 0 {
+	if !showDeleted {
+		query += " WHERE deleted = FALSE"
+		if year > 0 {
+			query += " AND EXTRACT(YEAR FROM date) = $1"
+			args = append(args, year)
+		}
+	} else if year > 0 {
 		query += " WHERE EXTRACT(YEAR FROM date) = $1"
 		args = append(args, year)
 	}
@@ -38,7 +44,7 @@ func (r *EventRepository) GetAll(ctx context.Context, year int) ([]models.Event,
 	for rows.Next() {
 		var e models.Event
 
-		err := rows.Scan(&e.ID, &e.Date, &e.Name, &e.Location, &e.Flyer)
+		err := rows.Scan(&e.ID, &e.Date, &e.Name, &e.Location, &e.Flyer, &e.Deleted)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan event: %w", err)
 		}
@@ -51,6 +57,12 @@ func (r *EventRepository) GetAll(ctx context.Context, year int) ([]models.Event,
 	}
 
 	return events, nil
+}
+
+func (r *EventRepository) Delete(ctx context.Context, id int) error {
+	query := "UPDATE events SET deleted = TRUE WHERE id = $1"
+	_, err := r.db.Exec(ctx, query, id)
+	return err
 }
 
 func (r *EventRepository) Create(ctx context.Context, event *models.Event) error {

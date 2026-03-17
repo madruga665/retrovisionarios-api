@@ -21,6 +21,7 @@ func SetupRoutes(r *gin.Engine, config RouterConfig) {
 		{
 			events.GET("/", config.EventController.GetAll)
 			events.POST("/", config.EventController.Create)
+			events.DELETE("/:id", config.EventController.Delete)
 		}
 
 		// Agrupamento de Videos
