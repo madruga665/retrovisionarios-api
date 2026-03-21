@@ -95,6 +95,18 @@ func (r *EventRepository) Update(ctx context.Context, event *models.UpdateEventR
 		argCount++
 	}
 
+	if event.Flyer != nil {
+		query += fmt.Sprintf("flyer = $%d, ", argCount)
+		args = append(args, *event.Flyer)
+		argCount++
+	}
+
+	if event.Deleted != nil {
+		query += fmt.Sprintf("deleted = $%d, ", argCount)
+		args = append(args, *event.Deleted)
+		argCount++
+	}
+
 	query = strings.TrimSuffix(query, ", ")
 	query += fmt.Sprintf(" WHERE id = $%d", argCount)
 	args = append(args, event.ID)
