@@ -26,7 +26,7 @@ const docTemplate = `{
     "paths": {
         "/events": {
             "get": {
-                "description": "Retorna uma lista de eventos, opcionalmente filtrada por ano.",
+                "description": "Retorna uma lista de eventos, opcionalmente filtrada por ano e status de deleção.",
                 "produces": [
                     "application/json"
                 ],
@@ -39,6 +39,12 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Ano para filtrar eventos",
                         "name": "year",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Se true, lista também eventos deletados",
+                        "name": "deleted",
                         "in": "query"
                     }
                 ],
@@ -117,6 +123,113 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{id}": {
+            "delete": {
+                "description": "Realiza um soft delete de um evento.",
+                "tags": [
+                    "events"
+                ],
+                "summary": "Deletar evento",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID do evento",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Atualiza as propriedades de um evento existente.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Atualizar evento",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID do evento",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados do evento para atualizar",
+                        "name": "event",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Event"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Event"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/videos": {
             "get": {
                 "description": "Retorna uma lista de videos",
@@ -156,9 +269,16 @@ const docTemplate = `{
     "definitions": {
         "models.Event": {
             "type": "object",
+            "required": [
+                "date",
+                "name"
+            ],
             "properties": {
                 "date": {
                     "type": "string"
+                },
+                "deleted": {
+                    "type": "boolean"
                 },
                 "flyer": {
                     "type": "string"
@@ -176,9 +296,14 @@ const docTemplate = `{
         },
         "models.Video": {
             "type": "object",
+            "required": [
+                "category",
+                "title",
+                "videoSrc"
+            ],
             "properties": {
                 "category": {
-                    "type": "string"
+                    "$ref": "#/definitions/models.VideoCategory"
                 },
                 "id": {
                     "type": "integer"
@@ -193,6 +318,17 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "models.VideoCategory": {
+            "type": "string",
+            "enum": [
+                "ORIGINAL SONG",
+                "COVER"
+            ],
+            "x-enum-varnames": [
+                "CategoryOriginalSong",
+                "CategoryCover"
+            ]
         }
     }
 }`

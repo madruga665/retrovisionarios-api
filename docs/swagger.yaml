@@ -4,6 +4,8 @@ definitions:
     properties:
       date:
         type: string
+      deleted:
+        type: boolean
       flyer:
         type: string
       id:
@@ -12,11 +14,14 @@ definitions:
         type: string
       name:
         type: string
+    required:
+    - date
+    - name
     type: object
   models.Video:
     properties:
       category:
-        type: string
+        $ref: '#/definitions/models.VideoCategory'
       id:
         type: integer
       subtitle:
@@ -25,7 +30,19 @@ definitions:
         type: string
       videoSrc:
         type: string
+    required:
+    - category
+    - title
+    - videoSrc
     type: object
+  models.VideoCategory:
+    enum:
+    - ORIGINAL SONG
+    - COVER
+    type: string
+    x-enum-varnames:
+    - CategoryOriginalSong
+    - CategoryCover
 host: localhost:5000
 info:
   contact:
@@ -42,12 +59,17 @@ info:
 paths:
   /events:
     get:
-      description: Retorna uma lista de eventos, opcionalmente filtrada por ano.
+      description: Retorna uma lista de eventos, opcionalmente filtrada por ano e
+        status de deleção.
       parameters:
       - description: Ano para filtrar eventos
         in: query
         name: year
         type: integer
+      - description: Se true, lista também eventos deletados
+        in: query
+        name: deleted
+        type: boolean
       produces:
       - application/json
       responses:
@@ -99,6 +121,77 @@ paths:
               type: string
             type: object
       summary: Criar evento
+      tags:
+      - events
+  /events/{id}:
+    delete:
+      description: Realiza um soft delete de um evento.
+      parameters:
+      - description: ID do evento
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Deletar evento
+      tags:
+      - events
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza as propriedades de um evento existente.
+      parameters:
+      - description: ID do evento
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Dados do evento para atualizar
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/models.Event'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Event'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Atualizar evento
       tags:
       - events
   /videos:

@@ -59,6 +59,24 @@ func (r *EventRepository) GetAll(ctx context.Context, year int, showDeleted bool
 	return events, nil
 }
 
+func (r *EventRepository) GetByID(ctx context.Context, id int) (*models.Event, error) {
+	query := "SELECT id, date, name, location, flyer, deleted FROM events WHERE id = $1"
+	var e models.Event
+
+	err := r.db.QueryRow(ctx, query, id).Scan(&e.ID, &e.Date, &e.Name, &e.Location, &e.Flyer, &e.Deleted)
+	if err != nil {
+		return nil, err
+	}
+
+	return &e, nil
+}
+
+func (r *EventRepository) Update(ctx context.Context, event *models.Event) error {
+	query := "UPDATE events SET date = $1, name = $2, location = $3, flyer = $4, deleted = $5 WHERE id = $6"
+	_, err := r.db.Exec(ctx, query, event.Date, event.Name, event.Location, event.Flyer, event.Deleted, event.ID)
+	return err
+}
+
 func (r *EventRepository) Delete(ctx context.Context, id int) error {
 	query := "UPDATE events SET deleted = TRUE WHERE id = $1"
 	_, err := r.db.Exec(ctx, query, id)

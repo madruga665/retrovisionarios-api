@@ -91,10 +91,11 @@ go run github.com/swaggo/swag/cmd/swag init -g cmd/server/main.go
 
 ## 🔌 Principais Endpoints
 
-| Método | Rota         | Descrição                          | Filtros |
-| ------ | ------------ | ---------------------------------- | ------- |
-| `GET`  | `/v1/events` | Lista todos os eventos cadastrados | `year`  |
-| `POST` | `/v1/events` | Cria um novo evento                | N/A     |
+| Método  | Rota          | Descrição                          | Filtros |
+| ------- | ------------- | ---------------------------------- | ------- |
+| `GET`   | `/v1/events`  | Lista todos os eventos cadastrados | `year`  |
+| `POST`  | `/v1/events`  | Cria um novo evento                | N/A     |
+| `PATCH` | `/v1/events/:id` | Atualiza um evento existente    | N/A     |
 
 ## 🧪 Qualidade de Código e Melhores Práticas
 
