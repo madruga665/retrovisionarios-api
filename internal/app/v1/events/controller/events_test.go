@@ -16,17 +16,27 @@ import (
 )
 
 type mockEventService struct {
-	GetAllFunc func(ctx context.Context, year int, showDeleted bool) ([]models.Event, error)
-	CreateFunc func(ctx context.Context, event *models.Event) error
-	DeleteFunc func(ctx context.Context, id int) error
+	GetAllFunc  func(ctx context.Context, year int, showDeleted bool) ([]models.Event, error)
+	GetByIDFunc func(ctx context.Context, id int) (*models.Event, error)
+	CreateFunc  func(ctx context.Context, event *models.Event) error
+	UpdateFunc  func(ctx context.Context, event *models.UpdateEventRequest) error
+	DeleteFunc  func(ctx context.Context, id int) error
 }
 
 func (m *mockEventService) GetAll(ctx context.Context, year int, showDeleted bool) ([]models.Event, error) {
 	return m.GetAllFunc(ctx, year, showDeleted)
 }
 
+func (m *mockEventService) GetByID(ctx context.Context, id int) (*models.Event, error) {
+	return m.GetByIDFunc(ctx, id)
+}
+
 func (m *mockEventService) Create(ctx context.Context, event *models.Event) error {
 	return m.CreateFunc(ctx, event)
+}
+
+func (m *mockEventService) Update(ctx context.Context, event *models.UpdateEventRequest) error {
+	return m.UpdateFunc(ctx, event)
 }
 
 func (m *mockEventService) Delete(ctx context.Context, id int) error {
@@ -265,6 +275,87 @@ func TestEventController_Delete(t *testing.T) {
 		r.DELETE("/events/:id", controller.Delete)
 
 		req, _ := http.NewRequest(http.MethodDelete, "/events/abc", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("Expected status 400, got %d", w.Code)
+		}
+	})
+}
+
+func TestEventController_Update(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("Success Happy Path", func(t *testing.T) {
+		mockService := &mockEventService{
+			UpdateFunc: func(ctx context.Context, event *models.UpdateEventRequest) error {
+				return nil
+			},
+		}
+		controller := NewEventController(mockService)
+
+		w := httptest.NewRecorder()
+		_, r := gin.CreateTestContext(w)
+		r.PATCH("/events/:id", controller.Update)
+
+		input := map[string]interface{}{
+			"name":     "Evento Atualizado",
+			"date":     "2026-03-10 20:00",
+			"location": "Novo Local",
+		}
+		body, _ := json.Marshal(input)
+		req, _ := http.NewRequest(http.MethodPatch, "/events/1", bytes.NewBuffer(body))
+
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", w.Code)
+		}
+
+		var response models.Event
+		json.Unmarshal(w.Body.Bytes(), &response)
+		if response.Name != "Evento Atualizado" {
+			t.Errorf("Expected name 'Evento Atualizado', got '%s'", response.Name)
+		}
+	})
+
+	t.Run("Event Not Found", func(t *testing.T) {
+		mockService := &mockEventService{
+			UpdateFunc: func(ctx context.Context, event *models.UpdateEventRequest) error {
+				return errors.New("no rows in result set")
+			},
+		}
+		controller := NewEventController(mockService)
+
+		w := httptest.NewRecorder()
+		_, r := gin.CreateTestContext(w)
+		r.PATCH("/events/:id", controller.Update)
+
+		input := map[string]interface{}{
+			"name": "Evento Inexistente",
+			"date": "2026-03-10 20:00",
+		}
+		body, _ := json.Marshal(input)
+		req, _ := http.NewRequest(http.MethodPatch, "/events/999", bytes.NewBuffer(body))
+
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusNotFound {
+			t.Errorf("Expected status 404, got %d", w.Code)
+		}
+		if !strings.Contains(w.Body.String(), "Evento não encontrado.") {
+			t.Errorf("Expected error message about event not found, got %s", w.Body.String())
+		}
+	})
+
+	t.Run("Invalid ID", func(t *testing.T) {
+		controller := NewEventController(&mockEventService{})
+
+		w := httptest.NewRecorder()
+		_, r := gin.CreateTestContext(w)
+		r.PATCH("/events/:id", controller.Update)
+
+		req, _ := http.NewRequest(http.MethodPatch, "/events/abc", nil)
 		r.ServeHTTP(w, req)
 
 		if w.Code != http.StatusBadRequest {

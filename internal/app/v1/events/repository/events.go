@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"retrovisionarios-api/internal/app/v1/events/models"
+	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -57,6 +59,68 @@ func (r *EventRepository) GetAll(ctx context.Context, year int, showDeleted bool
 	}
 
 	return events, nil
+}
+
+func (r *EventRepository) GetByID(ctx context.Context, id int) (*models.Event, error) {
+	query := "SELECT id, date, name, location, flyer, deleted FROM events WHERE id = $1"
+	var e models.Event
+
+	err := r.db.QueryRow(ctx, query, id).Scan(&e.ID, &e.Date, &e.Name, &e.Location, &e.Flyer, &e.Deleted)
+	if err != nil {
+		return nil, err
+	}
+
+	return &e, nil
+}
+
+func (r *EventRepository) Update(ctx context.Context, event *models.UpdateEventRequest) error {
+	query := "UPDATE events SET "
+	var args []interface{}
+	argCount := 1
+
+	if event.Name != nil {
+		query += fmt.Sprintf("name = $%d, ", argCount)
+		args = append(args, *event.Name)
+		argCount++
+	}
+
+	if event.Date != nil {
+		query += fmt.Sprintf("date = $%d, ", argCount)
+		args = append(args, *event.Date)
+		argCount++
+	}
+
+	if event.Location != nil {
+		query += fmt.Sprintf("location = $%d, ", argCount)
+		args = append(args, *event.Location)
+		argCount++
+	}
+
+	if event.Flyer != nil {
+		query += fmt.Sprintf("flyer = $%d, ", argCount)
+		args = append(args, *event.Flyer)
+		argCount++
+	}
+
+	if event.Deleted != nil {
+		query += fmt.Sprintf("deleted = $%d, ", argCount)
+		args = append(args, *event.Deleted)
+		argCount++
+	}
+
+	query = strings.TrimSuffix(query, ", ")
+	query += fmt.Sprintf(" WHERE id = $%d", argCount)
+	args = append(args, event.ID)
+
+	res, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	if res.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
 }
 
 func (r *EventRepository) Delete(ctx context.Context, id int) error {
