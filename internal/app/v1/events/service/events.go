@@ -36,10 +36,6 @@ func (s *EventService) GetByID(ctx context.Context, id int) (*models.Event, erro
 }
 
 func (s *EventService) Update(ctx context.Context, event *models.UpdateEventRequest) error {
-	// Verifica se o evento existe antes de tentar atualizar
-	if _, err := s.repo.GetByID(ctx, event.ID); err != nil {
-		return err
-	}
 	return s.repo.Update(ctx, event)
 }
 

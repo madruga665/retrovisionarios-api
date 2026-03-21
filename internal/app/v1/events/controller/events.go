@@ -57,6 +57,11 @@ func (c *EventController) Update(ctx *gin.Context) {
 		return
 	}
 
+	if event.Name == nil && event.Date == nil && event.Location == nil && event.Flyer == nil && event.Deleted == nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "pelo menos um campo deve ser informado para atualização"})
+		return
+	}
+
 	event.ID = id
 
 	if err := c.service.Update(ctx.Request.Context(), &event); err != nil {

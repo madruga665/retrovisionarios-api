@@ -6,6 +6,7 @@ import (
 	"retrovisionarios-api/internal/app/v1/events/models"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -111,8 +112,15 @@ func (r *EventRepository) Update(ctx context.Context, event *models.UpdateEventR
 	query += fmt.Sprintf(" WHERE id = $%d", argCount)
 	args = append(args, event.ID)
 
-	_, err := r.db.Exec(ctx, query, args...)
-	return err
+	res, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	if res.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
 }
 
 func (r *EventRepository) Delete(ctx context.Context, id int) error {
