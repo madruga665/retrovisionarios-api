@@ -2,12 +2,14 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"retrovisionarios-api/internal/app/v1/events/models"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 )
 
 type EventService interface {
@@ -58,7 +60,7 @@ func (c *EventController) Update(ctx *gin.Context) {
 	event.ID = id
 
 	if err := c.service.Update(ctx.Request.Context(), &event); err != nil {
-		if err.Error() == "no rows in result set" {
+		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Evento não encontrado."})
 			return
 		}
