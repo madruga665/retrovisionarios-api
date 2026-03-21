@@ -19,7 +19,7 @@ type mockEventService struct {
 	GetAllFunc  func(ctx context.Context, year int, showDeleted bool) ([]models.Event, error)
 	GetByIDFunc func(ctx context.Context, id int) (*models.Event, error)
 	CreateFunc  func(ctx context.Context, event *models.Event) error
-	UpdateFunc  func(ctx context.Context, event *models.Event) error
+	UpdateFunc  func(ctx context.Context, event *models.UpdateEventRequest) error
 	DeleteFunc  func(ctx context.Context, id int) error
 }
 
@@ -35,7 +35,7 @@ func (m *mockEventService) Create(ctx context.Context, event *models.Event) erro
 	return m.CreateFunc(ctx, event)
 }
 
-func (m *mockEventService) Update(ctx context.Context, event *models.Event) error {
+func (m *mockEventService) Update(ctx context.Context, event *models.UpdateEventRequest) error {
 	return m.UpdateFunc(ctx, event)
 }
 
@@ -288,7 +288,7 @@ func TestEventController_Update(t *testing.T) {
 
 	t.Run("Success Happy Path", func(t *testing.T) {
 		mockService := &mockEventService{
-			UpdateFunc: func(ctx context.Context, event *models.Event) error {
+			UpdateFunc: func(ctx context.Context, event *models.UpdateEventRequest) error {
 				return nil
 			},
 		}
@@ -321,7 +321,7 @@ func TestEventController_Update(t *testing.T) {
 
 	t.Run("Event Not Found", func(t *testing.T) {
 		mockService := &mockEventService{
-			UpdateFunc: func(ctx context.Context, event *models.Event) error {
+			UpdateFunc: func(ctx context.Context, event *models.UpdateEventRequest) error {
 				return errors.New("no rows in result set")
 			},
 		}

@@ -9,7 +9,7 @@ type EventRepository interface {
 	GetAll(ctx context.Context, year int, showDeleted bool) ([]models.Event, error)
 	GetByID(ctx context.Context, id int) (*models.Event, error)
 	Create(ctx context.Context, event *models.Event) error
-	Update(ctx context.Context, event *models.Event) error
+	Update(ctx context.Context, event *models.UpdateEventRequest) error
 	Delete(ctx context.Context, id int) error
 }
 
@@ -35,7 +35,7 @@ func (s *EventService) GetByID(ctx context.Context, id int) (*models.Event, erro
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *EventService) Update(ctx context.Context, event *models.Event) error {
+func (s *EventService) Update(ctx context.Context, event *models.UpdateEventRequest) error {
 	// Verifica se o evento existe antes de tentar atualizar
 	if _, err := s.repo.GetByID(ctx, event.ID); err != nil {
 		return err

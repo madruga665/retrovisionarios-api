@@ -14,7 +14,7 @@ type EventService interface {
 	GetAll(ctx context.Context, year int, showDeleted bool) ([]models.Event, error)
 	GetByID(ctx context.Context, id int) (*models.Event, error)
 	Create(ctx context.Context, event *models.Event) error
-	Update(ctx context.Context, event *models.Event) error
+	Update(ctx context.Context, event *models.UpdateEventRequest) error
 	Delete(ctx context.Context, id int) error
 }
 
@@ -42,12 +42,13 @@ func NewEventController(service EventService) *EventController {
 func (c *EventController) Update(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
+
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
 		return
 	}
 
-	var event models.Event
+	var event models.UpdateEventRequest
 	if err := ctx.ShouldBindJSON(&event); err != nil {
 		slog.Warn("Falha na validação de payload na atualização de evento", "error", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "dados do evento inválidos"})
@@ -66,7 +67,9 @@ func (c *EventController) Update(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, event)
+	updatedEvent, err := c.service.GetByID(ctx, event.ID)
+
+	ctx.JSON(http.StatusOK, updatedEvent)
 }
 
 // GetAll godoc

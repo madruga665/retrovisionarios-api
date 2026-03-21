@@ -67,3 +67,12 @@ type Event struct {
 	Flyer    *string  `json:"flyer"`
 	Deleted  bool     `json:"deleted"`
 }
+
+type UpdateEventRequest struct {
+	ID       int       `json:"id"`
+	Date     *DateTime `json:"date"`
+	Name     *string   `json:"name"`
+	Location *string   `json:"location"`
+	Flyer    *string   `json:"flyer"`
+	Deleted  *bool     `json:"deleted"`
+}
