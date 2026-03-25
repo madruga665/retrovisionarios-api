@@ -79,6 +79,39 @@ func (c *EventController) Update(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, updatedEvent)
 }
 
+// GetByID godoc
+// @Summary      Obter evento por ID
+// @Description  Retorna os detalhes de um único evento baseado no ID informado.
+// @Tags         events
+// @Produce      json
+// @Param        id   path      int  true  "ID do evento"
+// @Success      200  {object}  models.Event
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /events/{id} [get]
+func (c *EventController) GetByID(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+
+	event, err := c.service.GetByID(ctx.Request.Context(), id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Evento não encontrado."})
+			return
+		}
+		slog.Error("Erro ao buscar evento por ID", "error", err, "id", id)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno ao buscar evento"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, event)
+}
+
 // GetAll godoc
 // @Summary      Listar eventos
 // @Description  Retorna uma lista de eventos, opcionalmente filtrada por ano e status de deleção.

@@ -150,6 +150,42 @@ paths:
       summary: Deletar evento
       tags:
       - events
+    get:
+      description: Retorna os detalhes de um único evento baseado no ID informado.
+      parameters:
+      - description: ID do evento
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Event'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Obter evento por ID
+      tags:
+      - events
     patch:
       consumes:
       - application/json

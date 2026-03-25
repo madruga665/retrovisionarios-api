@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 )
 
 type mockEventService struct {
@@ -291,6 +292,9 @@ func TestEventController_Update(t *testing.T) {
 			UpdateFunc: func(ctx context.Context, event *models.UpdateEventRequest) error {
 				return nil
 			},
+			GetByIDFunc: func(ctx context.Context, id int) (*models.Event, error) {
+				return &models.Event{ID: id, Name: "Evento Atualizado"}, nil
+			},
 		}
 		controller := NewEventController(mockService)
 
@@ -322,7 +326,7 @@ func TestEventController_Update(t *testing.T) {
 	t.Run("Event Not Found", func(t *testing.T) {
 		mockService := &mockEventService{
 			UpdateFunc: func(ctx context.Context, event *models.UpdateEventRequest) error {
-				return errors.New("no rows in result set")
+				return pgx.ErrNoRows
 			},
 		}
 		controller := NewEventController(mockService)
@@ -356,6 +360,90 @@ func TestEventController_Update(t *testing.T) {
 		r.PATCH("/events/:id", controller.Update)
 
 		req, _ := http.NewRequest(http.MethodPatch, "/events/abc", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("Expected status 400, got %d", w.Code)
+		}
+	})
+}
+
+func TestEventController_GetByID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("Success Happy Path", func(t *testing.T) {
+		eventDate := time.Date(2026, 3, 25, 20, 0, 0, 0, time.UTC)
+		mockService := &mockEventService{
+			GetByIDFunc: func(ctx context.Context, id int) (*models.Event, error) {
+				if id == 1 {
+					return &models.Event{
+						ID:       1,
+						Name:     "Evento Teste",
+						Date:     models.DateTime(eventDate),
+						Location: "Local Teste",
+					}, nil
+				}
+				return nil, errors.New("no rows in result set")
+			},
+		}
+		controller := NewEventController(mockService)
+
+		w := httptest.NewRecorder()
+		_, r := gin.CreateTestContext(w)
+		r.GET("/events/:id", controller.GetByID)
+
+		req, _ := http.NewRequest(http.MethodGet, "/events/1", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", w.Code)
+		}
+
+		var response models.Event
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal response: %v", err)
+		}
+
+		if response.ID != 1 {
+			t.Errorf("Expected ID 1, got %d", response.ID)
+		}
+		if response.Name != "Evento Teste" {
+			t.Errorf("Expected name 'Evento Teste', got '%s'", response.Name)
+		}
+	})
+
+	t.Run("Event Not Found", func(t *testing.T) {
+		mockService := &mockEventService{
+			GetByIDFunc: func(ctx context.Context, id int) (*models.Event, error) {
+				return nil, pgx.ErrNoRows
+			},
+		}
+		controller := NewEventController(mockService)
+
+		w := httptest.NewRecorder()
+		_, r := gin.CreateTestContext(w)
+		r.GET("/events/:id", controller.GetByID)
+
+		req, _ := http.NewRequest(http.MethodGet, "/events/999", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusNotFound {
+			t.Errorf("Expected status 404, got %d", w.Code)
+		}
+		if !strings.Contains(w.Body.String(), "Evento não encontrado.") {
+			t.Errorf("Expected error message about event not found, got %s", w.Body.String())
+		}
+	})
+
+	t.Run("Invalid ID", func(t *testing.T) {
+		controller := NewEventController(&mockEventService{})
+
+		w := httptest.NewRecorder()
+		_, r := gin.CreateTestContext(w)
+		r.GET("/events/:id", controller.GetByID)
+
+		req, _ := http.NewRequest(http.MethodGet, "/events/abc", nil)
 		r.ServeHTTP(w, req)
 
 		if w.Code != http.StatusBadRequest {

@@ -20,6 +20,7 @@ func SetupRoutes(r *gin.Engine, config RouterConfig) {
 		events := v1.Group("/events")
 		{
 			events.GET("/", config.EventController.GetAll)
+			events.GET("/:id", config.EventController.GetByID)
 			events.POST("/", config.EventController.Create)
 			events.PATCH("/:id", config.EventController.Update)
 			events.DELETE("/:id", config.EventController.Delete)
