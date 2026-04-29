@@ -70,6 +70,10 @@ paths:
         in: query
         name: deleted
         type: boolean
+      - description: Nome para filtrar eventos (busca parcial)
+        in: query
+        name: name
+        type: string
       produces:
       - application/json
       responses:

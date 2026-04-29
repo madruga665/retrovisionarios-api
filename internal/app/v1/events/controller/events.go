@@ -13,7 +13,7 @@ import (
 )
 
 type EventService interface {
-	GetAll(ctx context.Context, year int, showDeleted bool) ([]models.Event, error)
+	GetAll(ctx context.Context, year int, showDeleted bool, name string) ([]models.Event, error)
 	GetByID(ctx context.Context, id int) (*models.Event, error)
 	Create(ctx context.Context, event *models.Event) error
 	Update(ctx context.Context, event *models.UpdateEventRequest) error
@@ -119,11 +119,13 @@ func (c *EventController) GetByID(ctx *gin.Context) {
 // @Produce      json
 // @Param        year     query     int   false  "Ano para filtrar eventos"
 // @Param        deleted  query     bool  false  "Se true, lista também eventos deletados"
+// @Param        name     query     string  false  "Nome para filtrar eventos (busca parcial)"
 // @Success      200      {object}  map[string][]models.Event
 // @Failure      500      {object}  map[string]string
 // @Router       /events [get]
 func (c *EventController) GetAll(ctx *gin.Context) {
 	yearStr := ctx.Query("year")
+	name := ctx.Query("name")
 	year := 0
 
 	if yearStr != "" {
@@ -134,7 +136,7 @@ func (c *EventController) GetAll(ctx *gin.Context) {
 
 	showDeleted, _ := strconv.ParseBool(ctx.DefaultQuery("deleted", "false"))
 
-	events, err := c.service.GetAll(ctx.Request.Context(), year, showDeleted)
+	events, err := c.service.GetAll(ctx.Request.Context(), year, showDeleted, name)
 
 	if err != nil {
 		slog.Error("Erro ao buscar eventos", "error", err, "year", year, "showDeleted", showDeleted)

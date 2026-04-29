@@ -17,15 +17,15 @@ import (
 )
 
 type mockEventService struct {
-	GetAllFunc  func(ctx context.Context, year int, showDeleted bool) ([]models.Event, error)
+	GetAllFunc  func(ctx context.Context, year int, showDeleted bool, name string) ([]models.Event, error)
 	GetByIDFunc func(ctx context.Context, id int) (*models.Event, error)
 	CreateFunc  func(ctx context.Context, event *models.Event) error
 	UpdateFunc  func(ctx context.Context, event *models.UpdateEventRequest) error
 	DeleteFunc  func(ctx context.Context, id int) error
 }
 
-func (m *mockEventService) GetAll(ctx context.Context, year int, showDeleted bool) ([]models.Event, error) {
-	return m.GetAllFunc(ctx, year, showDeleted)
+func (m *mockEventService) GetAll(ctx context.Context, year int, showDeleted bool, name string) ([]models.Event, error) {
+	return m.GetAllFunc(ctx, year, showDeleted, name)
 }
 
 func (m *mockEventService) GetByID(ctx context.Context, id int) (*models.Event, error) {
@@ -180,7 +180,7 @@ func TestEventController_GetAll(t *testing.T) {
 
 	t.Run("Success - List all active events", func(t *testing.T) {
 		mockService := &mockEventService{
-			GetAllFunc: func(ctx context.Context, year int, showDeleted bool) ([]models.Event, error) {
+			GetAllFunc: func(ctx context.Context, year int, showDeleted bool, name string) ([]models.Event, error) {
 				return []models.Event{
 					{ID: 1, Name: "Evento 1", Deleted: false},
 					{ID: 2, Name: "Evento 2", Deleted: false},
@@ -209,7 +209,7 @@ func TestEventController_GetAll(t *testing.T) {
 
 	t.Run("Success - Filter by year and deleted", func(t *testing.T) {
 		mockService := &mockEventService{
-			GetAllFunc: func(ctx context.Context, year int, showDeleted bool) ([]models.Event, error) {
+			GetAllFunc: func(ctx context.Context, year int, showDeleted bool, name string) ([]models.Event, error) {
 				if year == 2026 && showDeleted == true {
 					return []models.Event{
 						{ID: 1, Name: "Evento Deletado", Deleted: true},
@@ -238,6 +238,40 @@ func TestEventController_GetAll(t *testing.T) {
 		}
 		if response["result"][0].Deleted != true {
 			t.Errorf("Expected deleted event")
+		}
+	})
+
+	t.Run("Success - Filter by name", func(t *testing.T) {
+		mockService := &mockEventService{
+			GetAllFunc: func(ctx context.Context, year int, showDeleted bool, name string) ([]models.Event, error) {
+				if name == "Evento 1" {
+					return []models.Event{
+						{ID: 1, Name: "Evento 1"},
+					}, nil
+				}
+				return []models.Event{}, nil
+			},
+		}
+		controller := NewEventController(mockService)
+
+		w := httptest.NewRecorder()
+		_, r := gin.CreateTestContext(w)
+		r.GET("/events", controller.GetAll)
+
+		req, _ := http.NewRequest(http.MethodGet, "/events?name=Evento 1", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", w.Code)
+		}
+
+		var response map[string][]models.Event
+		json.Unmarshal(w.Body.Bytes(), &response)
+		if len(response["result"]) != 1 {
+			t.Errorf("Expected 1 event, got %d", len(response["result"]))
+		}
+		if response["result"][0].Name != "Evento 1" {
+			t.Errorf("Expected event name 'Evento 1', got '%s'", response["result"][0].Name)
 		}
 	})
 }

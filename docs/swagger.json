@@ -40,6 +40,12 @@
                         "description": "Se true, lista também eventos deletados",
                         "name": "deleted",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Nome para filtrar eventos (busca parcial)",
+                        "name": "name",
+                        "in": "query"
                     }
                 ],
                 "responses": {

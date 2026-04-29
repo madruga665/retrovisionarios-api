@@ -18,22 +18,37 @@ func NewEventRepository(db *pgxpool.Pool) *EventRepository {
 	return &EventRepository{db: db}
 }
 
-func (r *EventRepository) GetAll(ctx context.Context, year int, showDeleted bool) ([]models.Event, error) {
+func (r *EventRepository) GetAll(ctx context.Context, year int, showDeleted bool, name string) ([]models.Event, error) {
 	query := "SELECT id, date, name, location, flyer, deleted FROM events"
-	args := []interface{}{}
+	var where []string
+	var args []interface{}
 
+	// 1. Filtro de deletados
 	if !showDeleted {
-		query += " WHERE deleted = FALSE"
-		if year > 0 {
-			query += " AND EXTRACT(YEAR FROM date) = $1"
-			args = append(args, year)
-		}
-	} else if year > 0 {
-		query += " WHERE EXTRACT(YEAR FROM date) = $1"
+		where = append(where, "deleted = FALSE")
+	}
+
+	// 2. Filtro de ano
+	if year > 0 {
 		args = append(args, year)
+		// O placeholder será $1, $2, etc., dependendo do tamanho atual de args
+		where = append(where, fmt.Sprintf("EXTRACT(YEAR FROM date) = $%d", len(args)))
+	}
+
+	// 3. Filtro de nome
+	if name != "" {
+		args = append(args, "%"+name+"%")
+		where = append(where, fmt.Sprintf("name ILIKE $%d", len(args)))
+	}
+
+	// 4. Montagem da cláusula WHERE
+	if len(where) > 0 {
+		query += " WHERE " + strings.Join(where, " AND ")
 	}
 
 	query += " ORDER BY date ASC"
+
+	fmt.Println(query)
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {

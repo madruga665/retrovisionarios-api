@@ -93,7 +93,7 @@ go run github.com/swaggo/swag/cmd/swag init -g cmd/server/main.go
 
 | Método  | Rota          | Descrição                          | Filtros |
 | ------- | ------------- | ---------------------------------- | ------- |
-| `GET`   | `/v1/events`  | Lista todos os eventos cadastrados | `year`  |
+| `GET`   | `/v1/events`  | Lista todos os eventos cadastrados | `year`, `name`, `deleted` |
 | `GET`   | `/v1/events/:id` | Retorna um evento específico pelo ID | N/A |
 | `POST`  | `/v1/events`  | Cria um novo evento                | N/A     |
 | `PATCH` | `/v1/events/:id` | Atualiza um evento existente    | N/A     |

@@ -6,7 +6,7 @@ import (
 )
 
 type EventRepository interface {
-	GetAll(ctx context.Context, year int, showDeleted bool) ([]models.Event, error)
+	GetAll(ctx context.Context, year int, showDeleted bool, name string) ([]models.Event, error)
 	GetByID(ctx context.Context, id int) (*models.Event, error)
 	Create(ctx context.Context, event *models.Event) error
 	Update(ctx context.Context, event *models.UpdateEventRequest) error
@@ -21,8 +21,8 @@ func NewEventService(repo EventRepository) *EventService {
 	return &EventService{repo: repo}
 }
 
-func (s *EventService) GetAll(ctx context.Context, year int, showDeleted bool) ([]models.Event, error) {
-	eventList, err := s.repo.GetAll(ctx, year, showDeleted)
+func (s *EventService) GetAll(ctx context.Context, year int, showDeleted bool, name string) ([]models.Event, error) {
+	eventList, err := s.repo.GetAll(ctx, year, showDeleted, name)
 
 	if err != nil {
 		return []models.Event{}, err
