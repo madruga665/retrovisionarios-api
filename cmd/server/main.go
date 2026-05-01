@@ -99,6 +99,13 @@ func main() {
 	// Rota do Swagger
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	// Health check
+	router.GET("/v1/healthcheck", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "UP",
+		})
+	})
+
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Port),
 		Handler: router,
