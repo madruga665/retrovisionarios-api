@@ -2,15 +2,39 @@ services:
   db:
     image: postgres:15-alpine
     container_name: retro_db
+    restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: retrovisionarios
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d retrovisionarios"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: retro_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgres://postgres:password@db:5432/retrovisionarios?sslmode=disable
+      - PORT=5000
+      - GIN_MODE=release
+      - ALLOWED_ORIGINS=*
+      - TRUSTED_PROXIES=127.0.0.1
 
 volumes:
   postgres_data:

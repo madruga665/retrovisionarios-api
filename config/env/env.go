@@ -1,7 +1,6 @@
 package env
 
 import (
-	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -16,9 +15,7 @@ type Config struct {
 }
 
 func Load() *Config {
-	if err := godotenv.Load(); err != nil {
-		log.Println("Aviso: arquivo .env não encontrado, usando variáveis de ambiente do sistema")
-	}
+	godotenv.Load()
 
 	return &Config{
 		DatabaseURL:    getEnv("DATABASE_URL", ""),

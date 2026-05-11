@@ -112,11 +112,35 @@ go run github.com/swaggo/swag/cmd/swag init -g cmd/server/main.go
 go test ./...
 ```
 
-## 📦 Docker Deployment
+## 🐳 Executando com Docker Compose
 
-O projeto utiliza **Multi-stage Build** para gerar imagens mínimas (Alpine Linux):
+A forma mais simples de rodar todo o ambiente (API + Banco de Dados) é utilizando o Docker Compose. Ele já configura o PostgreSQL com os esquemas iniciais e a API conectada ao banco.
+
+### Subir o ambiente completo
 
 ```bash
-docker build -t retrovisionarios-api .
-docker run -p 5000:5000 retrovisionarios-api
+docker compose up -d --build
+```
+
+Isso irá:
+1.  Subir o container do **PostgreSQL** (`db`) na porta `5432`.
+2.  Executar o script `sql/init.sql` para criar as tabelas.
+3.  Compilar e subir a **API** (`app`) na porta `5000`.
+
+### Acessar os serviços
+
+*   **API Healthcheck**: `http://localhost:5000/v1/healthcheck`
+*   **Swagger Docs**: `http://localhost:5000/swagger/index.html`
+
+### Comandos Úteis
+
+```bash
+# Ver logs em tempo real
+docker compose logs -f app
+
+# Parar e remover os containers
+docker compose down
+
+# Limpar volumes e subir do zero (reseta o banco)
+docker compose down -v && docker compose up -d --build
 ```
