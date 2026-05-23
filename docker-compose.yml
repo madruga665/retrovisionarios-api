@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:15-alpine
     container_name: retro_db
-    restart: always
+    restart: "no"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -23,7 +23,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: retro_api
-    restart: unless-stopped
+    restart: "no"
     depends_on:
       db:
         condition: service_healthy
